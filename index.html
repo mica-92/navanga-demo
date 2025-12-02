@@ -1989,22 +1989,44 @@ body {
     </div>
 
 
-    <!-- Modal para configuración de periodo -->
-    <div class="modal" id="stats-period-modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>SELECCIONAR PERIODO</h3>
-                <button class="close-btn" id="close-stats-period-modal"><i class="fa-solid fa-x"></i></button>
+<!-- Modal para configuración de periodo - MODIFICADO -->
+<div class="modal" id="stats-period-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>SELECCIONAR PERIODO</h3>
+            <button class="close-btn" id="close-stats-period-modal"><i class="fa-solid fa-x"></i></button>
+        </div>
+        <div class="modal-body" style="display: block; padding: 20px;">
+            <!-- Botones de periodo -->
+            <div class="period-buttons">
+                <button class="period-btn" data-period="week">SEMANA</button>
+                <button class="period-btn active" data-period="month">MES</button>
+                <button class="period-btn" data-period="year">AÑO</button>
+                <button class="period-btn" data-period="custom">PERSONALIZADO</button>
             </div>
-                <!-- Botones de periodo movidos aquí -->
-                <div class="period-buttons">
-                    <button class="period-btn" data-period="week">SEMANA</button>
-                    <button class="period-btn  active" data-period="month">MES</button>
-                    <button class="period-btn" data-period="year">AÑO</button>
-                    <button class="period-btn" data-period="custom">PERSONALIZADO</button>
+            
+            <!-- Selector de fecha personalizada - NUEVO -->
+            <div id="stats-custom-date-range" style="display: none; margin-top: 15px;">
+                <div class="filter-section">
+                    <div class="date-input-label">SELECCIONAR RANGO DE FECHAS</div>
+                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                        <div style="flex: 1;">
+                            <label class="date-input-label" style="font-size: 0.8rem;">DESDE:</label>
+                            <input type="date" class="date-input" id="stats-date-from">
+                        </div>
+                        <div style="flex: 1;">
+                            <label class="date-input-label" style="font-size: 0.8rem;">HASTA:</label>
+                            <input type="date" class="date-input" id="stats-date-to">
+                        </div>
+                    </div>
+                    <div style="text-align: center;">
+                        <button class="go-to-history-btn" id="apply-custom-period" style="width: 100%;">APLICAR PERIODO PERSONALIZADO</button>
+                    </div>
                 </div>
+            </div>
         </div>
     </div>
+</div>
 
 <!-- Modal para filtros de series -->
 <div class="modal" id="asanas-filter-modal">
@@ -2610,20 +2632,69 @@ function displayNextMoon() {
 
         // Variables para estadísticas
         let currentPeriod = 'month';
+        let customPeriodRange = null; // ← NUEVA variable para almacenar el rango personalizado
 
-        // Configurar botones de periodo
-        function setupPeriodButtons() {
-            document.querySelectorAll('.period-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    // Remover clase active de todos los botones
-                    document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
-                    // Agregar clase active al botón clickeado
-                    this.classList.add('active');
-                    currentPeriod = this.dataset.period;
-                    updateStatistics();
-                });
-            });
+
+// Configurar botones de periodo - MODIFICADA
+function setupPeriodButtons() {
+    // Establecer fechas por defecto para periodo personalizado
+    const today = new Date();
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(today.getDate() - 30);
+    
+    document.getElementById('stats-date-from').valueAsDate = thirtyDaysAgo;
+    document.getElementById('stats-date-to').valueAsDate = today;
+    
+    // Configurar botones de periodo
+    document.querySelectorAll('.period-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Remover clase active de todos los botones
+            document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+            // Agregar clase active al botón clickeado
+            this.classList.add('active');
+            
+            const period = this.dataset.period;
+            currentPeriod = period;
+            
+            // Mostrar/ocultar selector de fecha personalizada
+            const customRange = document.getElementById('stats-custom-date-range');
+            customRange.style.display = period === 'custom' ? 'block' : 'none';
+            
+            // Si no es custom, actualizar estadísticas inmediatamente
+            if (period !== 'custom') {
+                updateStatistics();
+            }
+        });
+    });
+    
+    // Configurar botón para aplicar periodo personalizado
+    document.getElementById('apply-custom-period').addEventListener('click', function() {
+        const dateFrom = document.getElementById('stats-date-from').value;
+        const dateTo = document.getElementById('stats-date-to').value;
+        
+        if (!dateFrom || !dateTo) {
+            alert('Por favor selecciona ambas fechas');
+            return;
         }
+        
+        const fromDate = new Date(dateFrom);
+        const toDate = new Date(dateTo);
+        
+        if (fromDate > toDate) {
+            alert('La fecha "Desde" no puede ser posterior a la fecha "Hasta"');
+            return;
+        }
+        
+        // Guardar las fechas personalizadas
+        customPeriodRange = {
+            from: fromDate,
+            to: toDate
+        };
+        
+        updateStatistics();
+        hideStatsPeriodModal();
+    });
+}
 
         // Categorías de moods
         const moodCategories = {
@@ -2800,6 +2871,21 @@ function filterEntriesByPeriod(entries, period) {
             });
             
         case 'custom':
+            // Usar el rango de fechas personalizado
+            if (customPeriodRange) {
+                const { from, to } = customPeriodRange;
+                const fromDate = new Date(from);
+                fromDate.setHours(0, 0, 0, 0);
+                
+                const toDate = new Date(to);
+                toDate.setHours(23, 59, 59, 999);
+                
+                return entries.filter(entry => {
+                    const entryDate = new Date(entry.date);
+                    return entryDate >= fromDate && entryDate <= toDate;
+                });
+            }
+            // Si no hay rango personalizado, devolver todos
             return entries;
             
         default:
@@ -2833,13 +2919,20 @@ function getPeriodDisplayName(period) {
             return `Año <b>${today.getFullYear()}</b>`;
             
         case 'custom':
+            if (customPeriodRange) {
+                const { from, to } = customPeriodRange;
+                const fromStr = from.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
+                const toStr = to.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+                return `Personalizado <b>${fromStr} - ${toStr}</b>`;
+            }
             return 'Periodo personalizado';
             
         default:
             return period;
     }
 }
-        // Actualizar gráficos
+
+// Actualizar gráficos
         function updateCharts(entries) {
             updateMoodChart(entries);
             updatePracticeChart(entries);
@@ -3221,9 +3314,9 @@ function hideAsanasFilterModal() {
 }
 
 
-        // Configuración de Supabase
-        const SUPABASE_URL = 'https://xphsjqpgfwnygpemwudx.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhwaHNqcXBnZndueWdwZW13dWR4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ2NzU1NDksImV4cCI6MjA4MDI1MTU0OX0.ws2oYXr7kMs4yg3OyAFYghGIxLsRgAdoyoJszecjm0U';
+// Configuración de Supabase
+const SUPABASE_URL = 'https://xphsjqpgfwnygpemwudx.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhwaHNqcXBnZndueWdwZW13dWR4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ2NzU1NDksImV4cCI6MjA4MDI1MTU0OX0.ws2oYXr7kMs4yg3OyAFYghGIxLsRgAdoyoJszecjm0U';
 
         // Inicializar cliente de Supabase
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -4957,8 +5050,22 @@ function setupStatsPeriodModal() {
     setupPeriodButtons();
 }
 
-// Mostrar modal de configuración de periodo
+// Mostrar modal de configuración de periodo - MODIFICADA
 function showStatsPeriodModal() {
+    // Resetear selectores de fecha personalizada
+    const today = new Date();
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(today.getDate() - 30);
+    
+    document.getElementById('stats-date-from').valueAsDate = thirtyDaysAgo;
+    document.getElementById('stats-date-to').valueAsDate = today;
+    
+    // Si ya hay un periodo personalizado activo, mostrar las fechas
+    if (currentPeriod === 'custom' && customPeriodRange) {
+        document.getElementById('stats-date-from').valueAsDate = customPeriodRange.from;
+        document.getElementById('stats-date-to').valueAsDate = customPeriodRange.to;
+    }
+    
     document.getElementById('stats-period-modal').style.display = 'flex';
 }
 
@@ -4999,5 +5106,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 </body>
-
 </html>
