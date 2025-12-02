@@ -1772,6 +1772,135 @@ body {
     user-select: none;
 }
 
+/* MODALES - Añadir estos estilos al final del CSS */
+
+/* Modal de asanas específico */
+.asana-modal .modal-content {
+    max-width: 400px;
+    max-height: 80vh; /* Altura máxima del 80% de la ventana */
+    overflow-y: auto; /* Scroll vertical cuando es necesario */
+}
+
+/* Scrollbar personalizada para modales */
+.asana-modal .modal-content::-webkit-scrollbar {
+    width: 4px; /* Scrollbar muy delgada */
+}
+
+.asana-modal .modal-content::-webkit-scrollbar-track {
+    background: transparent;
+    margin: 5px 0;
+}
+
+.asana-modal .modal-content::-webkit-scrollbar-thumb {
+    background-color: var(--bordo);
+    border-radius: 2px;
+    border: none;
+}
+
+.asana-modal .modal-content::-webkit-scrollbar-thumb:hover {
+    background-color: #8b2e2f;
+}
+
+/* Para Firefox - mantener scrollbar fina */
+.asana-modal .modal-content {
+    scrollbar-width: thin;
+    scrollbar-color: var(--bordo) transparent;
+}
+
+/* Contenido del modal de asanas */
+.modal-asana {
+    padding: 15px;
+    max-height: calc(80vh - 100px); /* Considerar altura del header */
+    overflow-y: auto; /* Scroll interno si es necesario */
+}
+
+/* Scrollbar también para el contenido interno */
+.modal-asana::-webkit-scrollbar {
+    width: 4px;
+}
+
+.modal-asana::-webkit-scrollbar-track {
+    background: transparent;
+    margin: 5px 0;
+}
+
+.modal-asana::-webkit-scrollbar-thumb {
+    background-color: var(--bordo);
+    border-radius: 2px;
+    border: none;
+}
+
+.modal-asana::-webkit-scrollbar-thumb:hover {
+    background-color: #8b2e2f;
+}
+
+.modal-asana {
+    scrollbar-width: thin;
+    scrollbar-color: var(--bordo) transparent;
+}
+
+/* Ajustar secciones dentro del modal para evitar overflow innecesario */
+.asana-info-section {
+    max-height: none; /* Permitir que crezca según contenido */
+    overflow: visible;
+}
+
+/* Asegurar que las imágenes no sean demasiado grandes */
+.asana-image {
+    max-height: 200px; /* Altura máxima para imágenes */
+    object-fit: contain;
+}
+
+/* Modales en general - aplicar también scrollbar fina */
+.modal-content {
+    scrollbar-width: thin;
+    scrollbar-color: var(--bordo) transparent;
+}
+
+.modal-content::-webkit-scrollbar {
+    width: 4px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+    background: transparent;
+    margin: 5px 0;
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+    background-color: var(--bordo);
+    border-radius: 2px;
+    border: none;
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover {
+    background-color: #8b2e2f;
+}
+
+/* Para la lista de asanas en el track 4 */
+.asanas-section .asanas-list {
+    scrollbar-width: thin;
+    scrollbar-color: var(--bordo) transparent;
+}
+
+.asanas-section .asanas-list::-webkit-scrollbar {
+    width: 4px;
+}
+
+.asanas-section .asanas-list::-webkit-scrollbar-track {
+    background: transparent;
+    margin: 5px 0;
+}
+
+.asanas-section .asanas-list::-webkit-scrollbar-thumb {
+    background-color: var(--bordo);
+    border-radius: 2px;
+    border: none;
+}
+
+.asanas-section .asanas-list::-webkit-scrollbar-thumb:hover {
+    background-color: #8b2e2f;
+}
+
 </style>
 </head>
 
@@ -2468,16 +2597,20 @@ function getPracticeStatusHTML(entry) {
         </div>
     `;
     
-    // Agregar event listener después de crear el botón
+    // Agregar event listener después de crear el botón - MODIFICADO
     setTimeout(() => {
         const openModalBtn = document.getElementById('open-log-modal-today');
         if (openModalBtn) {
-            openModalBtn.addEventListener('click', function() {
-                showLogModal();
+            openModalBtn.addEventListener('click', function(e) {
+                e.preventDefault(); // Prevenir comportamiento por defecto
+                e.stopPropagation(); // Prevenir propagación
+                showLogModal(); // Solo abrir modal de registro, NO mover el carrusel
             });
         }
     }, 0);
 }
+    
+
 
     displayNextMoon();
 }
@@ -3322,18 +3455,19 @@ function hideAsanasFilterModal() {
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         const moodOptions = [
-            { name: 'special practice', label: 'SP', emoji: '<i class="fa-solid" style="color:#fff;">SP</i>', color: 'var(--blue)' },    
+            { name: 'special practice', label: 'special practice', emoji: '<i class="fa-solid" style="color:#fff;">SP</i>', color: 'var(--blue)' },    
             { name: 'feliz', label: 'Mood: YEaYy!!', emoji: '<i class="fa-solid fa-face-laugh-beam"></i>', color: '#2a9d8f' },
             { name: 'enojado', label: 'Mood: Ehhh... hubo días mejores', emoji: '<i class="fa-solid fa-face-meh"></i>', color: '#e9c46a' },
-            { name: 'cansancio', label: 'Mood: siesta', emoji: '<i class="fa-solid fa-face-tired"></i>', color: '#bc4749' },
+            { name: 'neutral', label: 'Mood: sin pena, sin gloria', emoji: '<i class="fa-solid fa-face-tired"></i>', color: '#bc4749' },
             
             { name: 'complete', label: 'Práctica Completa', emoji: '<i class="fa-solid fa-check"></i>', color: '#81b29a' },
             { name: 'inconclusa', label: 'Práctica Inconmpleta', emoji: '<i class="fa-solid fa-xmark"></i>', color: '#bc6c25' },
             
-            { name: 'primera', label: 'Primera Serie', emoji: '<i class="fa-solid fa-1"></i>', color: '#da627d' },
-            { name: 'segunda', label: 'Segunda Serie', emoji: '<i class="fa-solid fa-2"></i>', color: '#ffa5ab' },
-            { name: 'otro estilo', label: 'vinyasa', emoji: '<i class="fa-solid fa-fire"></i>', color: '#a26769' },
-            { name: 'yin', label: 'vin', emoji: '<i class="fa-solid fa-yin-yang"></i>', color: 'rgb(233, 196, 190)' },
+            { name: 'primera', label: 'Ashatanga: Primera Serie', emoji: '<i class="fa-solid fa-1"></i>', color: '#da627d' },
+            { name: 'segunda', label: 'Ashatanga: Segunda Serie', emoji: '<i class="fa-solid fa-2"></i>', color: '#ffa5ab' },
+            { name: 'otro estilo', label: 'Vinyasa', emoji: '<i class="fa-solid fa-fire"></i>', color: '#a26769' },
+            { name: 'yin', label: 'Yin', emoji: '<i class="fa-solid fa-yin-yang"></i>', color: 'rgb(233, 196, 190)' },
+            { name: 'fitness', label: 'Drills', emoji: '<i class="fa-solid fa-dumbbell"></i>', color: '#95E1D3' },
 
             
             { name: 'moon day', label: 'Moon Day', emoji: '<i class="fa-solid fa-moon"></i>', color: '#ced4da' },
@@ -3595,13 +3729,13 @@ function showAsanaModal(asana) {
     };
     
     modal.innerHTML = `
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>INFORMACIÓN DEL ĀSANA</h3>
-                <button class="close-btn"><i class="fa-solid fa-x"></i></button>
-            </div>
-            <div class="modal-asana">
-                <div class="practice-status">${asana.sandhi}</div>
+    <div class="modal-content" style="max-height: 90vh; overflow-y: auto;">
+        <div class="modal-header">
+            <h3>INFORMACIÓN DEL ĀSANA</h3>
+            <button class="close-btn"><i class="fa-solid fa-x"></i></button>
+        </div>
+        <div class="modal-asana" style="max-height: calc(90vh - 120px); overflow-y: auto;">
+            <div class="practice-status">${asana.sandhi}</div>
                                 <div class="asana-sanskrit-name" style="margin-top:5px">${asana.devanagari}<br>${asana.english || asana.sanskrit || ''}</div>
 
 
@@ -4275,13 +4409,15 @@ function displayLogHistory() {
         });
     });
     
-    // Añadir event listeners para los botones de editar
-    document.querySelectorAll('.edit-entry-btn').forEach(button => {
-        button.addEventListener('click', function() {
-            const entryId = this.getAttribute('data-id');
-            editEntryById(entryId);
-        });
+// En la función displayLogHistory, modificar el event listener para editar:
+document.querySelectorAll('.edit-entry-btn').forEach(button => {
+    button.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const entryId = this.getAttribute('data-id');
+        editEntryById(entryId);
     });
+});
 }
 
 function showHistoryFilterModal() {
@@ -4545,8 +4681,10 @@ function showLogModal(entry = null) {
     }
     
     modal.style.display = 'flex';
+    
+    // IMPORTANTE: NO cambiar el slide del carrusel aquí
+    // Solo mostrar el modal sobre el contenido actual
 }
-
 // Ocultar modal de registro (versión corregida)
 function hideLogModal() {
     const modal = document.getElementById('log-modal');
@@ -4754,9 +4892,14 @@ async function saveLogEntry() {
 
 
         // Listener directo para el botón de estadísticas (como respaldo)
+// Event listener para el botón de ir al historial - MODIFICAR O ELIMINAR
 document.addEventListener('click', function(e) {
-    if (e.target && (e.target.id === 'study-stats-btn' || e.target.closest('#study-stats-btn'))) {
-        showStudyStats();
+    if (e.target.classList.contains('go-to-history-btn')) {
+        // Si el botón tiene el ID específico para abrir el modal, no mover el carrusel
+        if (e.target.id !== 'open-log-modal-today') {
+            currentSlide = 5; // TRACK REGISTRO PRACTICA
+            updateCarousel();
+        }
     }
 });
 
@@ -5107,4 +5250,3 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 </body>
 </html>
-
